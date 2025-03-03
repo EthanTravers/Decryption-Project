@@ -168,7 +168,7 @@ def vigenere_decrypt(logger, ciphertext, key):
 def main():
     start_time = time.time()
     logger = get_logger()
-    # Take encrypted message from command line
+    # Take encrypted message file from command line
     if len(sys.argv) != 2:
         sys.exit(1)
 
