@@ -101,14 +101,14 @@ def get_average_distance(logger, peaks):
     distances = [peaks[i + 1] - peaks[i] for i in range(len(peaks) - 1)]
     return np.mean(distances)
 
-def get_vigenere_key(logger, encryptedText, keyLength, encryptedCharFrequency):
+def get_vigenere_key(logger, encryptedText, keyLength):
     key = ""
     for i in range(keyLength):
         # Get the ith character of the key
-        key += get_vigenere_key_character(logger, encryptedText, encryptedText[i::keyLength],encryptedCharFrequency)
+        key += get_vigenere_key_character(logger, encryptedText, encryptedText[i::keyLength])
     return key
 
-def get_vigenere_key_character(logger, encryptedText, subsetEncryptedText, encryptedCharFrequency):
+def get_vigenere_key_character(logger, encryptedText, subsetEncryptedText):
     """
     Determines the best shift for a Vigenère cipher key character using frequency analysis.
     """
@@ -145,6 +145,26 @@ def get_vigenere_key_character(logger, encryptedText, subsetEncryptedText, encry
     return best_shift_char
 
 
+def vigenere_decrypt(logger, ciphertext, key):
+    decrypted_text = []
+    key = key.lower()
+    key_length = len(key)
+    key_index = 0  # To track position in key
+
+    for char in ciphertext:
+        if char.isalpha():
+            shift = ord(key[key_index % key_length]) - ord('a')
+            if char.isupper():
+                new_char = chr((ord(char) - ord('A') - shift) % 26 + ord('A'))
+            else:
+                new_char = chr((ord(char) - ord('a') - shift) % 26 + ord('a'))
+            decrypted_text.append(new_char)
+            key_index += 1  # Move to next key letter only if alphabetic char
+        else:
+            decrypted_text.append(char)  # Preserve spaces and punctuation
+
+    return ''.join(decrypted_text)
+
 def main():
     start_time = time.time()
     logger = get_logger()
@@ -173,25 +193,22 @@ def main():
     logger.info(f"Key Length: {keyLength}")
 
     logger.info(f"Finding the frequency of each character in the encrypted text...")
-    # Find the frequency of each character in the encrypted text
-    encryptedCharFrequency = {}
-    for char in numerical_values:
-        if char in encryptedCharFrequency:
-            encryptedCharFrequency[char] += 1
-        else:
-            encryptedCharFrequency[char] = 1
-    # Get probability of each character
-    for char in encryptedCharFrequency:
-        encryptedCharFrequency[char] = encryptedCharFrequency[char] / len(numerical_values)
-    # Sort the dictionary by keys
-    encryptedCharFrequency = dict(sorted(encryptedCharFrequency.items()))
-    logger.info("Encrypted Character Frequency: " + str(encryptedCharFrequency))
 
     # Find the vigenere key
     logger.info("Attempting to find the Vigenere key...")
-    key = get_vigenere_key(logger, numerical_values, keyLength, encryptedCharFrequency)
-    logger.info("Vigenere Key: " + key)
+    key = get_vigenere_key(logger, numerical_values, keyLength)
     end_time = time.time()
+    logger.info("Vigenere Key: " + key)
     logger.info(f"Time taken: {end_time - start_time} seconds")
+
+    # Decrypt the message
+    logger.info("Decrypting messaging using the key...")
+    decryptedText = vigenere_decrypt(logger, encryptedText, key)
+
+    # Write the decrypted text to a file
+    decryptedTextFile = open("./Challenge-Text/Q1_Answer.txt", "w")
+    decryptedTextFile.write(decryptedText)
+    decryptedTextFile.close()
+    logger.info("Decrypted text written to Q1_Answer.txt")
 if __name__ == "__main__":
     main()
